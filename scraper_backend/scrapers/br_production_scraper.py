@@ -12,6 +12,7 @@ class BrazilProductionLead(BaseModel):
     uf: str = Field(description="Sigla do estado/distrito (ex: RJ, SP, MG, PT, Lisboa)")
     cidade: Optional[str] = None
     contato_producao: Optional[str] = Field(description="Email ou @ de quem está contratando", default=None)
+    url_origem: Optional[str] = Field(description="URL da vaga", default=None)
 
 def analyze_br_production(text_content: str, target_ufs: List[str]) -> Optional[BrazilProductionLead]:
     api_key = os.environ.get("GEMINI_API_KEY")
@@ -115,6 +116,17 @@ def scrape_production_leads():
                     if not contato:
                         contato = f"licitacao@{item.get('orgao_cnpj', 'gov')}.gov.br"
                         
+                    url_origem = result.url_origem
+                    if not url_origem:
+                        orgao_cnpj = item.get('orgao_cnpj', '')
+                        ano = item.get('ano', '')
+                        numero = item.get('numero_sequencial', '')
+                        
+                        if orgao_cnpj and ano and numero:
+                            url_origem = f"https://pncp.gov.br/app/editais/{orgao_cnpj}/{ano}/{numero}"
+                        else:
+                            url_origem = "https://pncp.gov.br/app/editais"
+                            
                     leads.append({
                         "projeto_nome": result.projeto if result.projeto and result.projeto != "Projeto Extraído via Backend Regex" else item.get('orgao_nome', 'Órgão Público'),
                         "uf": item.get('uf') or result.uf.upper(),
@@ -122,6 +134,7 @@ def scrape_production_leads():
                         "vagas": result.vagas_tecnicas if result.vagas_tecnicas else ["Equipe Técnica Geral"],
                         "descricao_original": desc,
                         "contato_producao": contato,
+                        "url_origem": url_origem,
                     })
         except Exception as e:
             print(f"Error fetching keyword {keyword}: {e}")
@@ -143,6 +156,7 @@ def scrape_production_leads():
                 "vagas": res.vagas_tecnicas if res.vagas_tecnicas else ["Equipe Técnica Geral"],
                 "descricao_original": "Buscamos rigger de efeitos em Lisboa - Portugal",
                 "contato_producao": res.contato_producao or "producao@ventoforte.pt",
+                "url_origem": "https://pt.linkedin.com/jobs/search?keywords=rigger+de+efeitos&location=Lisboa",
             })
             
     # Deduplicate logic based on original description

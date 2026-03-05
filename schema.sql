@@ -88,6 +88,7 @@ CREATE TABLE br_production_leads (
   vagas text[], -- Array: ['Rigger', 'Dublê']
   descricao_original text,
   contato_producao text,
+  url_origem text,
   data_postagem timestamptz default now()
 );
 
