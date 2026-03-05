@@ -17,45 +17,9 @@ class BrazilProductionLead(BaseModel):
 def analyze_br_production(text_content: str, target_ufs: List[str]) -> Optional[BrazilProductionLead]:
     api_key = os.environ.get("GEMINI_API_KEY")
 
-    def get_mock_lead(text):
-        nonlocal target_ufs
-        target_keywords = [
-            "rigger de efeitos",
-            "rigging",
-            "riggers",
-            "levitação",
-            "dublê de ação",
-            "duplo de ação",
-            "equipe de maquinaria e elétrica",
-            "técnico de efeitos visuais",
-            "diretor de efeitos especiais",
-            "técnico de efeitos físicos",
-            "diretor de efeitos físicos",
-            "coordenador de dublês",
-            "coordenador de efeitos especiais",
-            "coordenador de ação"
-        ]
-        trigger_words = [t.lower() for t in target_ufs] + target_keywords + ["rigger", "dublê", "efeitos", "maquinista", "vaga", "equipe"]
-        text_lower = text.lower()
-        import re
-        email_match = re.search(r'[\w\.-]+@[\w\.-]+', text)
-        handle_match = re.search(r'@\w+', text)
-        contato = email_match.group(0) if email_match else (handle_match.group(0) if handle_match else None)
-        
-        if any(word in text_lower for word in trigger_words) and not ("busco" in text_lower or "procuro" in text_lower):
-             return BrazilProductionLead(
-                 projeto="Projeto Extraído via Backend Regex",
-                 tipo="Série/Longa",
-                 vagas_tecnicas=["Rigger", "Maquinista"],
-                 uf="Lisboa" if ("lisboa" in text_lower or "portugal" in text_lower) else ("RJ" if "rj" in text_lower else "SP"),
-                 cidade="Lisboa" if ("lisboa" in text_lower or "portugal" in text_lower) else "Capital",
-                 contato_producao=contato,
-             )
-        return None
-
     if not api_key:
-        print("WARNING: GEMINI_API_KEY not set. Falling back to regex extraction.")
-        return get_mock_lead(text_content)
+        print("WARNING: GEMINI_API_KEY not set. Cannot analyze without API key.")
+        return None
         
     genai.configure(api_key=api_key)
     
@@ -81,12 +45,12 @@ def analyze_br_production(text_content: str, target_ufs: List[str]) -> Optional[
         )
         return lead
     except Exception as e:
-        print(f"Error extracting production lead: {e}. Falling back to Regex extraction.")
-        return get_mock_lead(text_content)
+        print(f"Error extracting production lead: {e}")
+        return None
 
 def scrape_production_leads():
     import requests
-    print("Starting Production Scraper on LIVE Public Tenders (PNCP) & Mock sources...")
+    print("Starting Production Scraper on LIVE Public Tenders (PNCP)...")
     
     keywords_to_scrape = ["audiovisual", "cenografia", "iluminação cênica", "rigger lisboa", "produção audiovisual lisboa"]
     target_ufs = ["RJ", "SP", "MG", "RS", "SC", "PR", "BA", "PT", "Lisboa"]
@@ -139,26 +103,6 @@ def scrape_production_leads():
         except Exception as e:
             print(f"Error fetching keyword {keyword}: {e}")
             
-    # Inject a realistic Mock Lead for Lisbon to guarantee that Lisbon leads appear
-    # since PNCP is an exclusively Brazilian public tender API
-    has_lisbon = any("Lisboa" == lead.get("cidade") or "Lisboa" in lead.get("uf", "") or "PT" == lead.get("uf") for lead in leads)
-    if not has_lisbon:
-        print("-> Injecting a mock Lisbon job to demonstrate functionality...")
-        mock_text = ("CONTRATANTE: Produtora Vento Forte Lda. OBJETO: Longa-metragem Internacional. "
-                     "Buscamos com urgência um Rigger de Efeitos e Maquinista baseados em Lisboa. "
-                     "Contato: producao@ventoforte.pt")
-        res = analyze_br_production(mock_text, target_ufs)
-        if res:
-            leads.append({
-                "projeto_nome": res.projeto if res.projeto and res.projeto != "Projeto Extraído via Backend Regex" else "Produtora Vento Forte",
-                "uf": "Lisboa",
-                "cidade": "Lisboa",
-                "vagas": res.vagas_tecnicas if res.vagas_tecnicas else ["Equipe Técnica Geral"],
-                "descricao_original": "Buscamos rigger de efeitos em Lisboa - Portugal",
-                "contato_producao": res.contato_producao or "producao@ventoforte.pt",
-                "url_origem": "https://pt.linkedin.com/jobs/search?keywords=rigger+de+efeitos&location=Lisboa",
-            })
-            
     # Deduplicate logic based on original description
     seen_desc = set()
     unique_leads = []
@@ -167,7 +111,11 @@ def scrape_production_leads():
             unique_leads.append(lead)
             seen_desc.add(lead["descricao_original"])
 
-    print(f"Extracted {len(unique_leads)} valid live production leads.")
+    if not unique_leads:
+        print("No real live production leads found at the moment based on the targeted keywords and locations. (No mockups enabled)")
+    else:
+        print(f"Extracted {len(unique_leads)} valid live production leads.")
+        
     return unique_leads
 
 if __name__ == "__main__":
