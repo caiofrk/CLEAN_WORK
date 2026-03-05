@@ -8,7 +8,7 @@ from typing import List, Optional
 class BrazilProductionLead(BaseModel):
     projeto: str
     tipo: str = Field(description="Ex: Longa-metragem, Série, Publicidade, Clipe")
-    vagas_tecnicas: List[str] = Field(description="Rigger, Dublê, Efeitos Físicos, Maquinista")
+    vagas_tecnicas: List[str] = Field(description="Rigger, Dublê, Efeitos Físicos, Efeitos Especiais, Duplo, Maquinista")
     uf: str = Field(description="Sigla do estado/distrito (ex: RJ, SP, MG, PT, Lisboa)")
     cidade: Optional[str] = None
     contato_producao: Optional[str] = Field(description="Email ou @ de quem está contratando", default=None)
@@ -20,11 +20,19 @@ def analyze_br_production(text_content: str, target_ufs: List[str]) -> Optional[
         nonlocal target_ufs
         target_keywords = [
             "rigger de efeitos",
+            "rigging",
+            "riggers",
+            "levitação",
             "dublê de ação",
+            "duplo de ação",
             "equipe de maquinaria e elétrica",
             "técnico de efeitos visuais",
+            "diretor de efeitos especiais",
             "técnico de efeitos físicos",
-            "coordenador de dublês"
+            "diretor de efeitos físicos",
+            "coordenador de dublês",
+            "coordenador de efeitos especiais",
+            "coordenador de ação"
         ]
         trigger_words = [t.lower() for t in target_ufs] + target_keywords + ["rigger", "dublê", "efeitos", "maquinista", "vaga", "equipe"]
         text_lower = text.lower()
@@ -62,9 +70,10 @@ def analyze_br_production(text_content: str, target_ufs: List[str]) -> Optional[
                 "content": f"Extraia oportunidades de produção audiovisual no Brasil e em Portugal. "
                            f"Filtre apenas para as regiões/estados: {', '.join(target_ufs)}. "
                            "Ignore profissionais buscando trabalho; foque em produtoras contratando. "
-                           "Dê preferência para vagas como: 'Busca-se Rigger de efeitos', "
-                           "'Vaga para Dublê de ação', 'Equipe de Maquinaria e Elétrica', "
-                           "'Técnico de Efeitos Visuais/Físicos', ou 'Coordenador de Dublês'."
+                           "Dê preferência para vagas envolvendo: 'Rigging', 'Riggers', 'Levitação', 'Rigger de Efeitos', "
+                           "'Dublê de ação', 'Duplo de ação', 'Coordenador de ação', 'Coordenador de dublês', "
+                           "'Maquinaria e Elétrica', 'Diretor ou Técnico de Efeitos Físicos', 'Diretor ou Técnico de Efeitos Especiais/Visuais', "
+                           "ou 'Coordenador de Efeitos Especiais'."
             },
             {"role": "user", "content": text_content}],
             response_model=BrazilProductionLead,
