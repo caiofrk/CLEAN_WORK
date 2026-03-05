@@ -75,10 +75,8 @@ def scrape_production_leads():
                 result = analyze_br_production(raw_text, target_ufs)
                 
                 if result:
-                    # Provide an automatic fail-back email based on the public entity if None
                     contato = result.contato_producao
-                    if not contato:
-                        contato = f"licitacao@{item.get('orgao_cnpj', 'gov')}.gov.br"
+                    # We no longer invent `licitacao@cnpj.gov.br` if the email doesn't exist
                         
                     url_origem = result.url_origem
                     if not url_origem:
