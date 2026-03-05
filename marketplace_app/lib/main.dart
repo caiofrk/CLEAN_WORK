@@ -95,6 +95,7 @@ class CallSheetPage extends ConsumerWidget {
                         .toList();
                     final String desc = lead['descricao_original'] ?? '';
                     final String contato = lead['contato_producao'] ?? '';
+                    final String urlOrigem = lead['url_origem'] ?? '';
 
                     return Card(
                       margin: const EdgeInsets.symmetric(
@@ -150,58 +151,78 @@ class CallSheetPage extends ConsumerWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 8),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: ElevatedButton.icon(
-                                onPressed: () async {
-                                  if (contato.isEmpty) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Nenhum contato encontrado. Tente via mensagem direta.',
-                                        ),
-                                      ),
-                                    );
-                                    return;
-                                  }
-
-                                  Uri? launchUri;
-                                  if (contato.contains('@') &&
-                                      !contato.startsWith('@') &&
-                                      contato.contains('.')) {
-                                    launchUri = Uri(
-                                      scheme: 'mailto',
-                                      path: contato,
-                                    );
-                                  } else if (contato.startsWith('@')) {
-                                    launchUri = Uri.parse(
-                                      'https://instagram.com/${contato.substring(1)}',
-                                    );
-                                  } else if (contato.startsWith('http')) {
-                                    launchUri = Uri.parse(contato);
-                                  }
-
-                                  if (launchUri != null &&
-                                      await canLaunchUrl(launchUri)) {
-                                    await launchUrl(
-                                      launchUri,
-                                      mode: LaunchMode.externalApplication,
-                                    );
-                                  } else {
-                                    if (context.mounted) {
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                if (urlOrigem.isNotEmpty) ...[
+                                  TextButton.icon(
+                                    onPressed: () async {
+                                      final launchUri = Uri.parse(urlOrigem);
+                                      if (await canLaunchUrl(launchUri)) {
+                                        await launchUrl(
+                                          launchUri,
+                                          mode: LaunchMode.externalApplication,
+                                        );
+                                      }
+                                    },
+                                    icon: const Icon(Icons.link),
+                                    label: const Text('Ver na Fonte'),
+                                  ),
+                                  const SizedBox(width: 8),
+                                ],
+                                ElevatedButton.icon(
+                                  onPressed: () async {
+                                    if (contato.isEmpty) {
                                       ScaffoldMessenger.of(
                                         context,
                                       ).showSnackBar(
-                                        SnackBar(
-                                          content: Text('Contato: $contato'),
+                                        const SnackBar(
+                                          content: Text(
+                                            'Nenhum contato encontrado. Tente via mensagem direta.',
+                                          ),
                                         ),
                                       );
+                                      return;
                                     }
-                                  }
-                                },
-                                icon: const Icon(Icons.send),
-                                label: const Text('Aplicar'),
-                              ),
+
+                                    Uri? launchUri;
+                                    if (contato.contains('@') &&
+                                        !contato.startsWith('@') &&
+                                        contato.contains('.')) {
+                                      launchUri = Uri(
+                                        scheme: 'mailto',
+                                        path: contato,
+                                      );
+                                    } else if (contato.startsWith('@')) {
+                                      launchUri = Uri.parse(
+                                        'https://instagram.com/${contato.substring(1)}',
+                                      );
+                                    } else if (contato.startsWith('http')) {
+                                      launchUri = Uri.parse(contato);
+                                    }
+
+                                    if (launchUri != null &&
+                                        await canLaunchUrl(launchUri)) {
+                                      await launchUrl(
+                                        launchUri,
+                                        mode: LaunchMode.externalApplication,
+                                      );
+                                    } else {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text('Contato: $contato'),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                                  icon: const Icon(Icons.send),
+                                  label: const Text('Aplicar'),
+                                ),
+                              ],
                             ),
                           ],
                         ),

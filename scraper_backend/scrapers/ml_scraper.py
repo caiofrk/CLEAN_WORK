@@ -28,7 +28,7 @@ async def scrape_mercadolivre(niche_keyword: str):
             logger.info("Extracting data (mocked)...")
             mock_data = [
                 {"title": "Instalação de Banners e Fachadas", "category": "Rope Access", "source": "Mercado Livre"},
-                {"title": "Pedreiro e Reforma em Geral", "category": "Civil Construction", "source": "Mercado Livre"}
+                {"title": "Pedreiro e Reforma em Geral", "category": "Construção Civil", "source": "Mercado Livre"}
             ]
             
             await browser.close()
