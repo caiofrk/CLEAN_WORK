@@ -166,7 +166,7 @@ class CallSheetPage extends ConsumerWidget {
                                       }
                                     },
                                     icon: const Icon(Icons.link),
-                                    label: const Text('Ver na Fonte'),
+                                    label: const Text('Fonte'),
                                   ),
                                   const SizedBox(width: 8),
                                 ],
